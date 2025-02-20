@@ -1,0 +1,277 @@
+au travail:
+proxmox: https://172n : n.16.0.86:8006/
+Installation ubuntu Budgie  n8n:n8n
+serveur n8n 172.16.0.110
+
+Installation de n8n
+Sou Linux
+---------
+Installation via npm
+Téléchargez et installez Node.js depuis le site officiel.
+Ouvrez PowerShell en tant qu'administrateur.
+Exécutez la commande : npm install n8n --location=global
+Lancez n8n avec : npx n8n
+Cette méthode est simple et directe, idéale pour les utilisateurs familiers avec l'environnement Node.js.
+
+Installation via Docker
+Téléchargez et installez Docker Desktop pour Windows.
+Ouvrez un terminal et exécutez : docker pull n8nio/n8n
+Lancez n8n via Docker Desktop en spécifiant le port 56781.
+L'approche Docker offre une meilleure isolation et facilite la gestion des dépendances2.
+Le choix de la "meilleure" méthode dépend de vos besoins spécifiques :
+Si vous préférez une installation rapide et directe, optez pour npm.
+Si vous recherchez une solution plus isolée et portable, choisissez Docker.
+
+Dans les deux cas, n8n sera accessible via votre navigateur à l'adresse http://localhost:5678 une fois lancé.
+
+
+
+
+Sur ubuntu avec nodeJS et n8n
+Mettez à jour le système
+sudo apt update && sudo apt upgrade -y
+
+Installez Node.js et npm
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo apt-get install -y nodejs
+
+vérifiez les versions de nodejs et npm
+node --version
+npm --version
+
+Mettez à jour vers la dernière version:
+sudo npm install -g npm@latest
+
+Installez n8n via npm
+sudo npm install n8n -g
+
+Lancez n8n
+n8n
+
+
+Pour une utilisation en production, envisagez d'utiliser PM2 pour gérer le processus n8n :
+npm install pm2@latest -g
+pm2 start n8n
+pm2 startup
+pm2 save
+
+
+
+
+Sur ubuntu avec Docker et n8n
+Mettez à jour le système
+sudo apt update && sudo apt upgrade -y
+
+Installez docker
+sudo apt update
+sudo apt install docker.io
+
+
+démarrez docker
+sudo systemctl start docker
+
+
+Téléchargez l'image docker de n8n
+docker pull n8nio/n8n
+
+
+Créez un fichier docker-compose.yml avec le contenu suivant:
+version: '3'
+services:
+  n8n:
+    image: n8nio/n8n
+    ports:
+      - 5678:5678
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=votremotdepasse
+    volumes:
+      - n8n_data:/home/node/.n8n
+volumes:
+  n8n_data:
+
+Lancez n8n avec docker compose
+docker-compose up -d
+
+
+Après ces étapes, n8n sera accessible à l'adresse http://localhost:5678. Assurez-vous de remplacer "votremotdepasse" par un mot de passe sécurisé de votre choix
+
+
+
+
+Sous windows:
+------------
+Installer docker desktop
+Exécuter:
+docker run -d \
+  --name n8n \
+  -p 5678:5678 \
+  -v n8n_data:/home/node/.n8n \
+  n8nio/n8n
+
+Explications des options :
+
+-d : Exécute le conteneur en arrière-plan.
+--name n8n : Nommez le conteneur "n8n".
+-p 5678:5678 : Mappez le port 5678 du conteneur au port 5678 de votre machine hôte.
+-v n8n_data:/home/node/.n8n : Montez un volume Docker (n8n_data) pour persister les données de n8n.
+n8nio/n8n : Image officielle de n8n.
+
+
+ou 
+un fichier docker-compose.yml
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - NODE_ENV=production
+      - GENERIC_TIMEZONE=Europe/Paris # Remplacez par votre fuseau horaire
+    restart: always
+
+volumes:
+  n8n_data:
+
+
+> docker-compose up -d
+accès: http://localhost:5678/setup
+
+
+Activer l'authentification (facultatif)
+avec docker run et l variable USER_PASSWORD
+docker run -d \
+  --name n8n \
+  -p 5678:5678 \
+  -v n8n_data:/home/node/.n8n \
+  -e USER_PASSWORD="monmotdepassefort" \
+  n8nio/n8n
+
+Avec docker-compose.yml
+environment:
+  - NODE_ENV=production
+  - GENERIC_TIMEZONE=Europe/Paris
+  - USER_PASSWORD=monmotdepassefort
+---------------------------------------------------------------------------------------
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - NODE_ENV=production
+      - GENERIC_TIMEZONE=Europe/Paris # Remplacez par votre fuseau horaire
+      - USER_PASSWORD=monmotdepassefort # Mot de passe pour l'authentification
+    restart: always
+
+volumes:
+  n8n_data:
+--------------------------------------------------------------------------------------
+Redémarrer le conteneur 
+docker-compose down
+docker-compose up -d
+
+---------------------------------------------------------------------------------------
+
+Gérer le conteneur n8n
+docker --version   version
+docker stop n8n    stop
+docker start n8n   redémarrer
+docker ps          état
+docker rm -f n8n   supprime
+
+docker logs n8n  pour les logs
+
+
+***********************************************************************************
+Changer le fuseau horaire :
+Modifiez la variable GENERIC_TIMEZONE dans le fichier docker-compose.yml ou ajoutez-la à la commande docker run :
+
+bash
+Copy
+1
+-e GENERIC_TIMEZONE=Europe/Paris
+Activer HTTPS :
+Si vous souhaitez exposer n8n sur Internet avec une connexion sécurisée, envisagez d'utiliser un reverse proxy comme Traefik , Nginx ou Caddy pour gérer les certificats SSL.
+
+***********************************************************************************
+Gérer les images docker
+docker images -a   #affiche
+docker pull nom_de_image:tag   #télécharge une image depuis docker hub
+docker rmi nom_image
+docker rmi nom_image  #supprimer une image spécifique
+docker image prune -a #supprime les images inutilisées
+
+
+Dive pour analyser et optimisé les images docker
+portainer pour gérer les images docker
+
+
+
+On peut installer n8n directement à partir du dépôt GitHub.
+mais plus pour le développement pour la production privilégié les méthodes comme npm ou docker.
+
+
+
+  
+
+
+
+-------------------------------------------------------------------------------------------------
+sudo passwd root   #pour un nouveau mot de passe
+
+proxy un jour proxy toujours ?
+------------------------------
+export http_proxy="http://172.16.0.254:8080"
+unset  http_proxy="http://@proxy:8080"
+
+
+------------------------------------
+accès bureau à distance:
+xrdp:
+sudo apt install xrdp xfce4 -y
+echo xfce4-session > ~/.xsession
+sudo systemctl restart xrdp
+sudo systemctl status xrdp
+si le par-feu
+sudo ufw allow 3389/tcp
+acces avec root
+
+
+vnc:
+sudo apt install tigervnc-standalone-server tigervnc-common xfce4 -y
+configure TigerVNC
+vncpasswd
+créer un fichier de configuration pour démarrer XFCE:
+nano ~/.vnc/xstartup
+ajouter les lignes:
+#!/bin/bash
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+exec startxfce4
+
+rendre executable:chmod +x ~/.vnc/xstartup
+démarrer vnc:
+vncserver :1
+configurer le par-fu: sudo ufw allow 5901/tcp
+
+depuis windows télécharger RealVNC Viewer ou TightVNC Viewer
+------------------------------------------------------------------------------------
+
+
+
+
+
+
+
